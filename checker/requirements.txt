@@ -1,0 +1,5 @@
+requests>=2.31,<3
+beautifulsoup4>=4.12,<5
+pywebpush>=2.0,<3
+defusedxml>=0.7,<1
+playwright>=1.45,<2

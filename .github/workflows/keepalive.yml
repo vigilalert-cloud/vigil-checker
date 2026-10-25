@@ -1,0 +1,33 @@
+name: Vigil keepalive
+# GitHub switches off scheduled workflows in a repository with no activity for 60 days.
+# This one makes a tiny commit twice a month so that never happens, and turns the other
+# two workflows back on if they were ever switched off.
+on:
+  schedule:
+    - cron: '17 3 1,15 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record some activity
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .keepalive
+          git config user.name "vigil-keepalive"
+          git config user.email "keepalive@users.noreply.github.com"
+          git add .keepalive
+          git commit -m "keepalive $(date -u +%F)" || true
+          git push || true
+      - name: Make sure the checker and mailer are switched on
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow enable check.yml --repo "$GITHUB_REPOSITORY" || true
+          gh workflow enable mail.yml --repo "$GITHUB_REPOSITORY" || true

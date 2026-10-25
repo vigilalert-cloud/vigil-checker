@@ -1,0 +1,40 @@
+name: Vigil checker
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: vigil-checker
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r checker/requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-v1
+      - name: Run checker
+        env:
+          VIGIL_API: ${{ secrets.VIGIL_API }}
+          CHECKER_SECRET: ${{ secrets.CHECKER_SECRET }}
+          VAPID_PRIVATE_PEM_B64: ${{ secrets.VAPID_PRIVATE_PEM_B64 }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GMAIL_USER_2: ${{ secrets.GMAIL_USER_2 }}
+          GMAIL_APP_PASSWORD_2: ${{ secrets.GMAIL_APP_PASSWORD_2 }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+        run: python checker/checker.py --window 30
